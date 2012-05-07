@@ -1,12 +1,18 @@
 package controllers
 
-import play.api._
 import play.api.mvc._
 
 object Application extends Controller {
-  
-  def index = Action {
-    Ok(views.html.index("Your new application is ready."))
+
+  def index = Github.Authenticated {
+    oauthToken =>
+      Action {
+        Ok(oauthToken)
+      }
   }
   
+  def logout = Action {
+    Ok("Logged out").withNewSession
+  }
+
 }
