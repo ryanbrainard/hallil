@@ -11,7 +11,20 @@ object Application extends Controller {
         Ok(accessToken)
       }
   }
-  
+
+  def issues = OAuth.using(GitHub) {
+    accessToken =>
+      Action {
+        Async {
+          GitHub.issues(accessToken).map {
+            issues =>
+
+              Ok(issues.toString)
+          }
+        }
+      }
+  }
+
   def logout = Action {
     Ok("Logged out").withNewSession
   }

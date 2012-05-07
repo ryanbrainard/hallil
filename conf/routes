@@ -4,6 +4,7 @@
 
 # Home page
 GET     /                               controllers.Application.index
+GET     /issues                         controllers.Application.issues
 GET     /logout                         controllers.Application.logout
 GET     /oauth/callback/:service        controllers.OAuth.callback(service: String, code: String)
 
