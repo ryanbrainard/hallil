@@ -16,9 +16,8 @@ object Application extends Controller {
     accessToken =>
       Action {
         Async {
-          GitHub.issues(accessToken).map {
+          GitHub.getAllIssues(accessToken).map {
             issues =>
-
               Ok(issues.toString)
           }
         }
