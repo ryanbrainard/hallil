@@ -10,3 +10,12 @@ trait OAuthService {
   def userAuthUrl: String
   def exchangeCodeForAccessToken(code: String): Promise[String]
 }
+
+object OAuthService {
+  def apply(serviceName: String): Option[OAuthService] = {
+    serviceName match {
+      case "github" => Some(GitHub)
+      case _ => None
+    }
+  }
+}

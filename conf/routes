@@ -6,7 +6,7 @@
 GET     /                               controllers.Application.index
 GET     /issues                         controllers.Application.issues
 GET     /logout                         controllers.Application.logout
-GET     /oauth/callback/:service        controllers.OAuth.callback(service: String, code: String)
+GET     /oauth/callback/:service        controllers.OAuth.handleCallback(service: String, code: String ?= null, error: String ?= null)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

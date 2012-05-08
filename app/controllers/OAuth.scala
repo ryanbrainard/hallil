@@ -2,7 +2,7 @@ package controllers
 
 import play.api.mvc._
 import play.api.mvc.Security._
-import services.{OAuthService, GitHub}
+import services.OAuthService
 
 object OAuth extends Controller {
 
@@ -18,14 +18,19 @@ object OAuth extends Controller {
     requestHeader => requestHeader.session.get(oauthAccessTokenKey(service)),
     _ => Redirect(service.userAuthUrl))(action)
 
-  def callback(service: String,  code: String) = {
-    handleCallback(service match {
-      case "github" => GitHub
-    })(code)
-  }
 
-  private def handleCallback(service: OAuthService)(code: String) = Action {
+  def handleCallback(serviceName: String, code: String, error: String) = Action {
     implicit request =>
+      OAuthService(serviceName) match {
+        case Some(service) => 
+          if (error != null) { handleCallbackError(service, error) }
+          else if (code != null) { handleCallbackSuccess(service, code) }
+          else { InternalServerError("Unknown OAuth State") }
+        case None => InternalServerError("Unknown OAuth Service")
+      }
+  }
+  
+  private def handleCallbackSuccess(service: OAuthService, code: String)(implicit request: Request[AnyContent]) = {
       Async {
         service.exchangeCodeForAccessToken(code).map {
           accessToken =>
@@ -34,6 +39,10 @@ object OAuth extends Controller {
             )
         }
       }
+  }
+  
+  private def handleCallbackError(service: OAuthService, error: String) = {
+    InternalServerError("OAuth Error: " + error)
   }
 
   private def oauthAccessTokenKey(service: OAuthService): String = {
