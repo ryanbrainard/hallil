@@ -1,0 +1,17 @@
+@(allReposWithIssues: Map[Repo, Seq[Issue]])
+
+<h1>All Issues for All Repos</h1>
+
+<ul>
+    <ul>
+        @for((repo, issues) <- allReposWithIssues) {
+        <li>@repo.name
+            <ul>
+                @for(issue <- issues) {
+                <li><a href="@issue.html_url" target="_blank">@issue.title</a></li>
+                }
+            </ul>
+        </li>
+        }
+    </ul>
+</ul>

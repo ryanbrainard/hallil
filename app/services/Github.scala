@@ -57,7 +57,7 @@ class GitHub(accessToken: String) {
   def getIssues(): Promise[Seq[Issue]] = get[Seq[Issue]]("/issues")
   def getIssues(repo: Repo): Promise[Seq[Issue]] = get[Seq[Issue]](repo.url + "/issues")
 
-  def getAllIssues(): Promise[Map[Repo, Seq[Issue]]] = {
+  def getAllReposWithIssues(): Promise[Map[Repo, Seq[Issue]]] = {
     getAllOwners().flatMap {
       owners =>
         val allPromisesOfReposWithTheirIssues: Seq[Promise[Map[Repo, Seq[Issue]]]] = owners.map {

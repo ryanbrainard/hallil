@@ -2,6 +2,10 @@ package controllers
 
 import play.api.mvc._
 import services.GitHub
+import com.codahale.jerkson.Json
+import collection.immutable.Map
+import collection.Seq
+import models.{Issue, Repo}
 
 object Application extends Controller {
 
@@ -16,9 +20,9 @@ object Application extends Controller {
     accessToken =>
       Action {
         Async {
-          GitHub(accessToken).getAllIssues().map {
-            issues =>
-              Ok(issues.toString())
+          GitHub(accessToken).getAllReposWithIssues().map {
+            (allReposWithIssues: Map[Repo, Seq[Issue]]) =>
+              Ok(views.html.Application.issues(allReposWithIssues))
           }
         }
       }
