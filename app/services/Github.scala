@@ -3,9 +3,9 @@ package services
 import play.api.libs.ws.WS
 import play.api.libs.concurrent.Promise
 import com.codahale.jerkson.Json
-import collection.Seq
-import collection.immutable.{Map, List}
+import collection.immutable.Map
 import models._
+import collection.{SortedMap, Seq}
 
 /**
  * @author Ryan Brainard
@@ -67,10 +67,11 @@ class GitHub(accessToken: String) {
 
         Promise.sequence(allPromisesOfReposWithTheirIssues).map {
           allReposWithTheirIssues =>
-            allReposWithTheirIssues.reduceLeft {
+            val reduced: Map[Repo, Seq[Issue]] = allReposWithTheirIssues.reduceLeft {
               (a, b) =>
-                a ++ b
+                (a ++ b)
             }
+            SortedMap(reduced.toSeq: _*).toMap
         }
     }
   }
@@ -86,7 +87,7 @@ class GitHub(accessToken: String) {
 
   private def getAllIssuesIn(reposP: Promise[Seq[Repo]]) = reposP.flatMap {
     allRepos =>
-      val reposWithIssues: Seq[Repo] = allRepos.filter(_.has_issues)
+      val reposWithIssues: Seq[Repo] = allRepos.filter(_.has_issues).filter(_.open_issues > 0)
 
       val reposToIssues: Seq[Promise[(Repo, Seq[Issue])]] = reposWithIssues.map { repo =>
         getIssues(repo).map {

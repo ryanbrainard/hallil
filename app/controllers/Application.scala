@@ -2,17 +2,16 @@ package controllers
 
 import play.api.mvc._
 import services.GitHub
-import com.codahale.jerkson.Json
 import collection.immutable.Map
-import collection.Seq
 import models.{Issue, Repo}
+import collection.Seq
 
 object Application extends Controller {
 
   def index = OAuth.using(GitHub) {
     accessToken =>
       Action {
-        Ok(accessToken)
+        Ok(views.html.Application.index())
       }
   }
 
