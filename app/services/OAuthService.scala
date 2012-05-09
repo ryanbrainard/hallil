@@ -14,7 +14,7 @@ trait OAuthService {
 object OAuthService {
   def apply(serviceName: String): Option[OAuthService] = {
     serviceName match {
-      case "github" => Some(GitHub)
+      case "github" => Some(GitHubApi)
       case _ => None
     }
   }

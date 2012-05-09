@@ -3,10 +3,13 @@
 # ~~~~
 
 # Home page
-GET     /                               controllers.Application.index
-GET     /issues                         controllers.Application.issues
-GET     /logout                         controllers.Application.logout
-GET     /oauth/callback/:service        controllers.OAuth.handleCallback(service: String, code: String ?= null, error: String ?= null)
+GET     /                               controllers.ApplicationController.index
+GET     /oauth/callback/:service        controllers.OAuthController.handleCallback(service: String, code: String ?= null, error: String ?= null)
+GET     /logout                         controllers.ApplicationController.logout
+
+GET     /github/key                     controllers.GitHubController.key
+GET     /github/issues                  controllers.GitHubController.issues
+
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

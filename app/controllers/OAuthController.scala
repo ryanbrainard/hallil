@@ -4,12 +4,12 @@ import play.api.mvc._
 import play.api.mvc.Security._
 import services.OAuthService
 
-object OAuth extends Controller {
+object OAuthController extends Controller {
 
   /**
-   * Action wrapper for
+   * Action wrapper for authenticating with OAuth
    *
-   * @param service OAuth service to use to authenticate
+   * @param service OAuthController service to use to authenticate
    * @param action action to wrap
    * @tparam A the type of the request body
    * @return
@@ -25,8 +25,8 @@ object OAuth extends Controller {
         case Some(service) => 
           if (error != null) { handleCallbackError(service, error) }
           else if (code != null) { handleCallbackSuccess(service, code) }
-          else { InternalServerError("Unknown OAuth State") }
-        case None => InternalServerError("Unknown OAuth Service")
+          else { InternalServerError("Unknown OAuthController State") }
+        case None => InternalServerError("Unknown OAuthController Service")
       }
   }
   
@@ -42,7 +42,7 @@ object OAuth extends Controller {
   }
   
   private def handleCallbackError(service: OAuthService, error: String) = {
-    InternalServerError("OAuth Error: " + error)
+    InternalServerError("OAuthController Error: " + error)
   }
 
   private def oauthAccessTokenKey(service: OAuthService): String = {

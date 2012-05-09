@@ -11,7 +11,7 @@ import collection.{SortedMap, Seq}
  * @author Ryan Brainard
  */
 
-object GitHub extends OAuthService {
+object GitHubApi extends OAuthService {
 
   private val clientId = sys.env.getOrElse("GITHUB_CLIENT_ID", sys.error("GITHUB_CLIENT_ID not configured"))
   private val clientSecret = sys.env.getOrElse("GITHUB_CLIENT_SECRET", sys.error("GITHUB_CLIENT_SECRET not configured"))
@@ -28,15 +28,15 @@ object GitHub extends OAuthService {
       response =>
         response.body match {
           case accessTokenExchangeResponsePattern(accessToken) => accessToken
-          case _ => sys.error("OAuth exchange response does not match expected pattern")
+          case _ => sys.error("OAuthController exchange response does not match expected pattern")
         }
     }
   }
   
-  def apply(accessToken: String) = new GitHub(accessToken)
+  def apply(accessToken: String) = new GitHubApi(accessToken)
 }
 
-class GitHub(accessToken: String) {
+class GitHubApi(accessToken: String) {
 
   private val baseApiUrl = "https://api.github.com"
   
@@ -52,9 +52,11 @@ class GitHub(accessToken: String) {
   def getOrgs(): Promise[Seq[Organization]] = get[Seq[Organization]]("/user/orgs")
 
   def getRepos(): Promise[Seq[Repo]] = get[Seq[Repo]]("/user/repos")
+
   def getRepos(org: Organization): Promise[Seq[Repo]] = get[Seq[Repo]]("/orgs/" + org.login + "/repos")
 
   def getIssues(): Promise[Seq[Issue]] = get[Seq[Issue]]("/issues")
+
   def getIssues(repo: Repo): Promise[Seq[Issue]] = get[Seq[Issue]](repo.url + "/issues")
 
   def getAllReposWithIssues(): Promise[Map[Repo, Seq[Issue]]] = {
