@@ -1,0 +1,13 @@
+@(allRepos: Seq[Repo])
+
+<h1>Repos</h1>
+
+<ul>
+    <ul>
+        @for(repo <- allRepos) {
+        <li><a href="@repo.html_url" target="_blank">@repo.owner.login/@repo.name</a>
+
+        </li>
+        }
+    </ul>
+</ul>

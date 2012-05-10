@@ -9,6 +9,7 @@ GET     /logout                         controllers.ApplicationController.logout
 
 GET     /github/key                     controllers.GitHubController.key
 GET     /github/issues                  controllers.GitHubController.issues
+GET     /github/repos                  controllers.GitHubController.repos
 
 
 # Map static resources from the /public folder to the /assets URL path
