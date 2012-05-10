@@ -62,12 +62,12 @@ class GitHubApi(accessToken: String) {
   def getAllReposWithIssues(): Promise[Map[Repo, Seq[Issue]]] = {
     getAllOwners().flatMap {
       owners =>
-        val allPromisesOfReposWithTheirIssues: Seq[Promise[Map[Repo, Seq[Issue]]]] = owners.map {
+        Promise.sequence(owners.map {
           owner =>
-            getAllIssuesFor(owner)
-        }
-
-        Promise.sequence(allPromisesOfReposWithTheirIssues).map {
+            getAllReposFor(owner).flatMap {
+              allRepos => getAllIssuesIn(allRepos.filter(_.open_issues > 0))
+            }
+        }).map {
           allReposWithTheirIssues =>
             val reduced: Map[Repo, Seq[Issue]] = allReposWithTheirIssues.reduceLeft {
               (a, b) =>
@@ -80,24 +80,18 @@ class GitHubApi(accessToken: String) {
   
   private def getAllOwners(): Promise[Seq[CanOwnRepo]] = getOrgs().map(_:+ AuthenticatedUser)
 
-  private def getAllIssuesFor(owner: CanOwnRepo): Promise[Map[Repo, Seq[Issue]]] = {
-    owner match {
-      case org: Organization => getAllIssuesIn(getRepos(org))
-      case user: AuthenticatedUser.type => getAllIssuesIn(getRepos())
-    }
+  private def getAllReposFor(owner: CanOwnRepo): Promise[Seq[Repo]] = owner match {
+      case org: Organization => getRepos(org)
+      case user: AuthenticatedUser.type => getRepos()
   }
 
-  private def getAllIssuesIn(reposP: Promise[Seq[Repo]]) = reposP.flatMap {
-    allRepos =>
-      val reposWithIssues: Seq[Repo] = allRepos.filter(_.has_issues).filter(_.open_issues > 0)
-
-      val reposToIssues: Seq[Promise[(Repo, Seq[Issue])]] = reposWithIssues.map { repo =>
+  private def getAllIssuesIn(repos: Seq[Repo]): Promise[Map[Repo, Seq[Issue]]] = {
+    Promise.sequence(repos.filter(_.has_issues).map {
+      repo =>
         getIssues(repo).map {
           issues =>
             (repo, issues)
         }
-      }
-
-      Promise.sequence(reposToIssues).map(_.toMap)
+    }).map(_.toMap)
   }
 }
