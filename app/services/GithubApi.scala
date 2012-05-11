@@ -90,7 +90,7 @@ class GitHubApi(accessToken: String) {
     }
   }
 
-  private def getAllOwners(): Promise[Seq[CanOwnRepo]] = getOrgs().map(_ :+ AuthenticatedUser)
+  private def getAllOwners(): Promise[Seq[CanOwnRepo]] = Promise.pure(Seq(AuthenticatedUser))//getOrgs().map(_ :+ AuthenticatedUser)
 
   private def getAllReposFor(owner: CanOwnRepo): Promise[Seq[Repo]] = owner match {
     case org: Organization => getRepos(org)

@@ -4,6 +4,8 @@ import play.api.mvc._
 import services.GitHubApi
 import collection.immutable.Map
 import collection.Seq
+import play.api.data._
+import play.api.data.Forms._
 import models.{View, Issue, Repo}
 
 object GitHubController extends Controller {
@@ -25,15 +27,30 @@ object GitHubController extends Controller {
       }
   }
 
+  val selectReposForm = Form(
+    single(
+      "repoNames" -> seq(text)
+    )
+  )
+
   def repos = OAuthController.using(GitHubApi) {
     accessToken =>
       Action {
         Async {
           GitHubApi(accessToken).getAllRepos().map {
             (allRepos: Seq[Repo]) =>
-              Ok(views.html.GitHub.repos(allRepos.sortBy(_.name)))
+              val form: Form[Seq[String]] = selectReposForm.fill(allRepos.map(repo => repo.owner.login + "/" + repo.name))
+              Ok(views.html.GitHub.repos(form))
           }
         }
       }
+  }
+ 
+  def selectRepos = Action(parse.urlFormEncoded) { request =>
+      val repoNames: Seq[String] = request.body("repoNames")
+
+
+
+      Ok(repoNames.toString)
   }
 }

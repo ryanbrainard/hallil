@@ -18,4 +18,4 @@ case class Repo(name: String, url: String, has_issues: Boolean, owner: Owner, op
 
 case class Issue(id: String,  title: String, state: String,html_url: String)
 
-case class View(reposName: Set[String])
+case class View(repoNames: List[String])

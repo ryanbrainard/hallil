@@ -1,13 +1,14 @@
-@(allRepos: Seq[Repo])
+@(selectReposForm: Form[Seq[String]])
 
 <h1>Repos</h1>
 
-<ul>
-    <ul>
-        @for(repo <- allRepos) {
-        <li><a href="@repo.html_url" target="_blank">@repo.owner.login/@repo.name</a>
+@import helper._
 
-        </li>
-        }
-    </ul>
-</ul>
+@form(action = routes.GitHubController.selectRepos) {
+
+    @repeat(selectReposForm("repoNames")) { repoName =>
+        <input type="checkbox" name="repoNames" value="@repoName.value" checked/>@repoName.value<br/>
+    }
+
+    <input type="submit"/>
+}
