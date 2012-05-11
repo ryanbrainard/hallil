@@ -21,8 +21,9 @@ object GitHubController extends Controller {
       Action {
         Async {
           GitHubApi(accessToken).getAllReposWithTheirIssues().map {
+          
             (allReposWithIssues: Map[Repo, Seq[Issue]]) =>
-              Ok(views.html.GitHub.issues(allReposWithIssues))
+              Ok(views.html.GitHub.issues(allReposWithIssues.filterKeys(r => getSelectedRepos(accessToken).contains(r.toCanonicalName))))
           }
         }
       }
@@ -32,15 +33,12 @@ object GitHubController extends Controller {
     accessToken =>
       Action {
         Async {
-          val rawSelectedRepos = Redis.exec(_.hget(accessToken, "selectedRepos"))
-          val selectedRepos = Option(rawSelectedRepos).map(r => Json.parse[Seq[String]](r)).getOrElse(Seq())
-
           GitHubApi(accessToken).getAllRepos().map {
             (allRepos: Seq[Repo]) =>
               val allReposWithSelections: Map[String, Boolean] = allRepos.map {
                 repo =>
-                  val repoName = repo.owner.login + "/" + repo.name
-                  (repoName, selectedRepos.contains(repoName))
+                  val repoName = repo.toCanonicalName
+                  (repoName, getSelectedRepos(accessToken).contains(repoName))
               }.toMap
 
               Ok(views.html.GitHub.repos(allReposWithSelections))
@@ -59,5 +57,10 @@ object GitHubController extends Controller {
 
           Ok("Saved!")
       }
+  }
+  
+  def getSelectedRepos(accessToken: String) = {
+    val rawSelectedRepos = Redis.exec(_.hget(accessToken, "selectedRepos"))
+    Option(rawSelectedRepos).map(r => Json.parse[Seq[String]](r)).getOrElse(Seq())
   }
 }

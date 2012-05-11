@@ -1,10 +1,10 @@
-@(allReposWithIssues: Map[Repo, Seq[Issue]])
+@(reposWithTheirIssues: Map[Repo, Seq[Issue]])
 
 <h1>All Issues for All Repos</h1>
 
 <ul>
     <ul>
-        @for((repo, issues) <- allReposWithIssues) {
+        @for((repo, issues) <- reposWithTheirIssues) {
         <li><a href="@repo.html_url" target="_blank">@repo.owner.login/@repo.name</a>
             <ul>
                 @for(issue <- issues) {

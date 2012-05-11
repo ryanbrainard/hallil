@@ -77,7 +77,7 @@ class GitHubApi(accessToken: String) {
         Promise.sequence(owners.map {
           owner =>
             getAllReposFor(owner).flatMap {
-              allRepos => getAllIssuesIn(allRepos.filter(_.open_issues > 0))
+              allRepos => getAllIssuesIn(allRepos)
             }
         }).map {
           allReposWithTheirIssues =>
