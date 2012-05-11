@@ -28,24 +28,22 @@ object GitHubController extends Controller {
       }
   }
 
-  val selectReposForm = Form(
-    single(
-      "repoNames" -> seq(text)
-    )
-  )
-
   def repos = OAuthController.using(GitHubApi) {
     accessToken =>
       Action {
         Async {
-          val repoNames = Json.parse[Seq[String]](Redis.exec(_.hget(accessToken, "repoNames")))
+          val rawSelectedRepos = Redis.exec(_.hget(accessToken, "selectedRepos"))
+          val selectedRepos = Option(rawSelectedRepos).map(r => Json.parse[Seq[String]](r)).getOrElse(Seq())
 
-
-          
           GitHubApi(accessToken).getAllRepos().map {
             (allRepos: Seq[Repo]) =>
-              val form: Form[Seq[String]] = selectReposForm.fill(allRepos.map(repo => repo.owner.login + "/" + repo.name))
-              Ok(views.html.GitHub.repos(form))
+              val allReposWithSelections: Map[String, Boolean] = allRepos.map {
+                repo =>
+                  val repoName = repo.owner.login + "/" + repo.name
+                  (repoName, selectedRepos.contains(repoName))
+              }.toMap
+
+              Ok(views.html.GitHub.repos(allReposWithSelections))
           }
         }
       }
@@ -55,9 +53,9 @@ object GitHubController extends Controller {
     accessToken =>
       Action(parse.urlFormEncoded) {
         request =>
-          val repoNames: Seq[String] = request.body("repoNames")
+          val selectedRepos: Seq[String] = request.body("selectedRepos")
 
-          Redis.exec(_.hset(accessToken, "repoNames", Json.generate(repoNames)))
+          Redis.exec(_.hset(accessToken, "selectedRepos", Json.generate(selectedRepos)))
 
           Ok("Saved!")
       }

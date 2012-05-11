@@ -1,4 +1,4 @@
-@(selectReposForm: Form[Seq[String]])
+@(repos: Map[String, Boolean])
 
 <h1>Repos</h1>
 
@@ -6,8 +6,8 @@
 
 @form(action = routes.GitHubController.selectRepos) {
 
-    @repeat(selectReposForm("repoNames")) { repoName =>
-        <input type="checkbox" name="repoNames" value="@repoName.value" checked/>@repoName.value<br/>
+    @for((repoName, selected) <- repos) {
+        <input type="checkbox" name="selectedRepos" value="@repoName" @(if(selected) "checked" else "")/>@repoName<br/>
     }
 
     <input type="submit"/>
