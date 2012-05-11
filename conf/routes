@@ -8,8 +8,8 @@ GET     /oauth/callback/:service        controllers.OAuthController.handleCallba
 GET     /logout                         controllers.ApplicationController.logout
 
 GET     /github/key                     controllers.GitHubController.key
+GET     /github/repos                   controllers.GitHubController.displayReposWithIssuesForSelection
 GET     /github/issues                  controllers.GitHubController.issues
-GET     /github/repos                   controllers.GitHubController.repos
 POST    /github/repos/select            controllers.GitHubController.selectRepos
 
 

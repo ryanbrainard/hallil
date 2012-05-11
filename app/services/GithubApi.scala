@@ -61,6 +61,8 @@ class GitHubApi(accessToken: String) {
 
   def getIssues(repo: Repo): Promise[Seq[Issue]] = get[Seq[Issue]](repo.url + "/issues")
 
+  def getIssues(repoName: String): Promise[Seq[Issue]] = get[Seq[Issue]]("/repos/" + repoName + "/issues")
+
   def getAllRepos() = {
     getAllOwners().flatMap {
       owners =>
@@ -90,19 +92,30 @@ class GitHubApi(accessToken: String) {
     }
   }
 
-  private def getAllOwners(): Promise[Seq[CanOwnRepo]] = Promise.pure(Seq(AuthenticatedUser))//getOrgs().map(_ :+ AuthenticatedUser)
+  private def getAllOwners(): Promise[Seq[CanOwnRepo]] = getOrgs().map(_ :+ AuthenticatedUser)
 
   private def getAllReposFor(owner: CanOwnRepo): Promise[Seq[Repo]] = owner match {
     case org: Organization => getRepos(org)
     case user: AuthenticatedUser.type => getRepos()
   }
 
+  def getAllIssuesInNamed(repoNames: Seq[String]): Promise[Map[String, Seq[Issue]]] = {
+    Promise.sequence(repoNames.map {
+      repoName =>
+        getIssues(repoName).map {
+          issues =>
+            (repoName, issues.sortBy(issue => issue.number))
+        }
+    }).map(_.toMap)
+  }
+
+  //todo: re-dupe with above
   private def getAllIssuesIn(repos: Seq[Repo]): Promise[Map[Repo, Seq[Issue]]] = {
     Promise.sequence(repos.filter(_.has_issues).map {
       repo =>
         getIssues(repo).map {
           issues =>
-            (repo, issues)
+            (repo, issues.sortBy(issue => issue.number))
         }
     }).map(_.toMap)
   }

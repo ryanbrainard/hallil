@@ -17,6 +17,6 @@ case class Repo(name: String, url: String, has_issues: Boolean, owner: Owner, op
   def toCanonicalName = owner.login + "/" + name
 }
 
-case class Issue(id: String,  title: String, state: String,html_url: String)
+case class Issue(number: Int, title: String, state: String,html_url: String)
 
 case class View(repoNames: List[String])

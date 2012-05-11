@@ -1,14 +1,16 @@
-@(reposWithTheirIssues: Map[Repo, Seq[Issue]])
+@(repoNamesWithTheirIssues: Map[String, Seq[Issue]])
 
-<h1>All Issues for All Repos</h1>
+<h1>Issues for Selected Repos</h1>
+
+<h3><a href="/github/repos">Change repo selection</a></h3>
 
 <ul>
     <ul>
-        @for((repo, issues) <- reposWithTheirIssues) {
-        <li><a href="@repo.html_url" target="_blank">@repo.owner.login/@repo.name</a>
+        @for((repoName, issues) <- repoNamesWithTheirIssues) {
+        <li><a href="http://github.com/@repoName" target="_blank">@repoName</a>
             <ul>
                 @for(issue <- issues) {
-                <li><a href="@issue.html_url" target="_blank">@issue.title</a></li>
+                <li><a href="@issue.html_url" target="_blank">@issue.number: @issue.title</a></li>
                 }
             </ul>
         </li>

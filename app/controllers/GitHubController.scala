@@ -3,8 +3,6 @@ package controllers
 import play.api.mvc._
 import collection.immutable.Map
 import collection.Seq
-import play.api.data._
-import play.api.data.Forms._
 import models.{Issue, Repo}
 import services.{Redis, GitHubApi}
 import com.codahale.jerkson.Json
@@ -20,22 +18,21 @@ object GitHubController extends Controller {
     accessToken =>
       Action {
         Async {
-          GitHubApi(accessToken).getAllReposWithTheirIssues().map {
-          
-            (allReposWithIssues: Map[Repo, Seq[Issue]]) =>
-              Ok(views.html.GitHub.issues(allReposWithIssues.filterKeys(r => getSelectedRepos(accessToken).contains(r.toCanonicalName))))
+          GitHubApi(accessToken).getAllIssuesInNamed(getSelectedRepos(accessToken)).map {
+            (selectedReposWithIssues: Map[String, Seq[Issue]]) =>
+              Ok(views.html.GitHub.issues(selectedReposWithIssues))
           }
         }
       }
   }
 
-  def repos = OAuthController.using(GitHubApi) {
+  def displayReposWithIssuesForSelection = OAuthController.using(GitHubApi) {
     accessToken =>
       Action {
         Async {
           GitHubApi(accessToken).getAllRepos().map {
             (allRepos: Seq[Repo]) =>
-              val allReposWithSelections: Map[String, Boolean] = allRepos.map {
+              val allReposWithSelections: Map[String, Boolean] = allRepos.filter(r => r.has_issues).map {
                 repo =>
                   val repoName = repo.toCanonicalName
                   (repoName, getSelectedRepos(accessToken).contains(repoName))
@@ -55,7 +52,7 @@ object GitHubController extends Controller {
 
           Redis.exec(_.hset(accessToken, "selectedRepos", Json.generate(selectedRepos)))
 
-          Ok("Saved!")
+          Redirect("/github/issues")
       }
   }
   
