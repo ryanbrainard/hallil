@@ -1,6 +1,4 @@
-@main("Hallil") {
-    
-    <a href="/github/repos">Select the GitHub Repos You Care About</a><br/>
-    <a href="/github/issues">View Issues for Selected Repos</a>
-
+@main("Home") {
+    <a href="@routes.GitHubController.displayReposWithIssuesForSelection">Select the GitHub Repos You Care About</a><br/>
+    <a href="@routes.GitHubController.issues">View Issues for Selected Repos</a>
 }

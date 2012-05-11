@@ -1,15 +1,26 @@
 @(repos: Map[String, Boolean])
 
-<h1>Repo Selection</h1>
-
-<h3>Select the repos for which you would like to see issues:</h3>
-
 @import helper._
-@form(action = routes.GitHubController.selectRepos) {
 
+@main("Repositories") {
+
+<div>
+    <h1>Repositories</h1>
+    <strong>Select the repositories for which you would like to see issues:</strong>
+</div>
+
+<div>
+    @form(action = routes.GitHubController.selectRepos) {
+
+    <input type="submit" value="Select" class="btn btn-primary" style="margin-top: 2ex; margin-bottom: 2ex"/>
+
+    <fieldset>
     @for((repoName, selected) <- repos) {
-        <input type="checkbox" name="selectedRepos" value="@repoName" @(if(selected) "checked" else "")/>@repoName<br/>
+    <input type="checkbox" name="selectedRepos" value="@repoName" @(if(selected) "checked" else "")/>@repoName<br/>
     }
+    </fieldset>
 
-    <input type="submit" value="Select"/>
+    <input type="submit" value="Select" class="btn btn-primary" style="margin-top: 2ex; margin-bottom: 2ex"/>
+    }
+</div>
 }
