@@ -49,9 +49,18 @@ object GitHubController extends Controller {
       Action(parse.urlFormEncoded) {
         request =>
           val selectedRepos: Seq[String] = request.body("selectedRepos")
-
           Redis.exec(_.hset(accessToken, "selectedRepos", Json.generate(selectedRepos)))
+          Redirect("/github/issues")
+      }
+  }
 
+  def unselectRepo(owner: String, name: String) = OAuthController.using(GitHubApi) {
+    accessToken =>
+      Action {
+        request =>
+          val repoNameToRemove = owner + "/" + name
+          val newSelectedRepos: Seq[String] = (getSelectedRepos(accessToken).toSet - repoNameToRemove).toSeq
+          Redis.exec(_.hset(accessToken, "selectedRepos", Json.generate(newSelectedRepos)))
           Redirect("/github/issues")
       }
   }

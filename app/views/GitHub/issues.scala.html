@@ -9,7 +9,7 @@
     <ul>
         <ul>
             @for((repoName, issues) <- repoNamesWithTheirIssues) {
-            <li><a href="http://github.com/@repoName" target="_blank">@repoName</a>
+            <li><a href="http://github.com/@repoName" target="_blank">@repoName</a>&nbsp;<a href="/github/repos/unselect/@repoName"><i class="icon-remove"></i></a>
                 <ul>
                     @for(issue <- issues) {
                     <li><a href="@issue.html_url" target="_blank">@issue.number: @issue.title</a></li>

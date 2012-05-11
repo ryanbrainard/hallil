@@ -3,14 +3,15 @@
 # ~~~~
 
 # Home page
-GET     /                               controllers.ApplicationController.index
-GET     /oauth/callback/:service        controllers.OAuthController.handleCallback(service: String, code: String ?= null, error: String ?= null)
-GET     /logout                         controllers.ApplicationController.logout
+GET     /                                            controllers.ApplicationController.index
+GET     /oauth/callback/:service                     controllers.OAuthController.handleCallback(service: String, code: String ?= null, error: String ?= null)
+GET     /logout                                      controllers.ApplicationController.logout
 
-GET     /github/key                     controllers.GitHubController.key
-GET     /github/repos                   controllers.GitHubController.displayReposWithIssuesForSelection
-GET     /github/issues                  controllers.GitHubController.issues
-POST    /github/repos/select            controllers.GitHubController.selectRepos
+GET     /github/key                                  controllers.GitHubController.key
+GET     /github/repos                                controllers.GitHubController.displayReposWithIssuesForSelection
+GET     /github/issues                               controllers.GitHubController.issues
+POST    /github/repos/select                         controllers.GitHubController.selectRepos
+GET     /github/repos/unselect/:owner/:name          controllers.GitHubController.unselectRepo(owner, name)
 
 
 # Map static resources from the /public folder to the /assets URL path
