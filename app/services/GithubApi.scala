@@ -2,11 +2,11 @@ package services
 
 import play.api.libs.ws.WS
 import play.api.libs.concurrent.Promise
-import com.codahale.jerkson.Json
 import collection.immutable.Map
 import models._
 import collection.{SortedMap, Seq}
 import play.api.Logger
+import com.codahale.jerkson.{ParsingException, Json}
 
 /**
  * @author Ryan Brainard
@@ -47,11 +47,19 @@ class GitHubApi(accessToken: String) {
 
     WS.url(fullUrl).withHeaders(("Authorization", "token " + accessToken)).get().map {
       response =>
-        Json.parse[A](response.body)(mf)
+        try {
+          Json.parse[A](response.body)(mf)
+        } catch {
+          case e: ParsingException =>
+            Logger.error("Failed to parse response from " + fullUrl + "\n" + response.body, e)
+            throw e
+        }
     }
   }
 
   def getOrgs(): Promise[Seq[Organization]] = get[Seq[Organization]]("/user/orgs")
+
+  def getRepo(repoName: String): Promise[Repo] = get[Repo]("/repos/" + repoName)
 
   def getRepos(): Promise[Seq[Repo]] = get[Seq[Repo]]("/user/repos")
 

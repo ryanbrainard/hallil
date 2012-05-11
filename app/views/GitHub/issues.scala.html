@@ -1,9 +1,18 @@
-@(repoNamesWithTheirIssues: Map[String, Seq[Issue]])
+@(repoNamesWithTheirIssues: Map[String, Seq[Issue]])(implicit flash:play.api.mvc.Flash)
+
+@import helper._
 
 @main("Issues") {
 <h1>Issues</h1>
 
-<a class="btn btn-primary" href="/github/repos" style="margin-top: 2ex; margin-bottom: 2ex">Choose Repositories</a>
+@flash.get("success")
+@flash.get("error")
+
+<form class="well form-inline" method="POST" action="/github/repos/select">
+    <p><strong>Quick Add Repository</strong></p>
+    <input name="repoName" class="input" placeholder="owner/project">
+    <button type="submit" class="btn">Add</button>
+</form>
 
 <div>
     <ul>

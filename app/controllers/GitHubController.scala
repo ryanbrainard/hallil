@@ -16,11 +16,11 @@ object GitHubController extends Controller {
 
   def issues = OAuthController.using(GitHubApi) {
     accessToken =>
-      Action {
+      Action { implicit request =>
         Async {
           GitHubApi(accessToken).getAllIssuesInNamed(getSelectedRepos(accessToken)).map {
             (selectedReposWithIssues: Map[String, Seq[Issue]]) =>
-              Ok(views.html.GitHub.issues(selectedReposWithIssues))
+            Ok(views.html.GitHub.issues(selectedReposWithIssues))
           }
         }
       }
@@ -47,9 +47,27 @@ object GitHubController extends Controller {
   def selectRepos = OAuthController.using(GitHubApi) {
     accessToken =>
       Action(parse.urlFormEncoded) {
-        request =>
-          val selectedRepos: Seq[String] = request.body("selectedRepos")
-          Redis.exec(_.hset(accessToken, "selectedRepos", Json.generate(selectedRepos)))
+        implicit request =>
+          if (request.body.contains("selectedRepos")) {
+            // bulk / total replacement
+            val selectedRepos: Seq[String] = request.body("selectedRepos")
+            Redis.exec(_.hset(accessToken, "selectedRepos", Json.generate(selectedRepos)))
+          } else if (request.body.contains("repoName")) {
+            // single / additive
+            val repoName: String = request.body("repoName").head
+
+            GitHubApi(accessToken).getRepo(repoName).value.fold(
+              e => {
+                // ignore
+                // TODO: display error msg
+              },
+              s => {
+                val newSelectedRepos: Seq[String] = (getSelectedRepos(accessToken).toSet + repoName).toSeq
+                Redis.exec(_.hset(accessToken, "selectedRepos", Json.generate(newSelectedRepos)))
+              }
+            )
+          }
+
           Redirect("/github/issues")
       }
   }
