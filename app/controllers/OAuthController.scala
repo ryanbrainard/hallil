@@ -1,23 +1,20 @@
 package controllers
 
 import play.api.mvc._
-import play.api.mvc.Security._
 import services.OAuthService
 
 object OAuthController extends Controller {
 
-  /**
-   * Action wrapper for authenticating with OAuth
-   *
-   * @param service OAuthController service to use to authenticate
-   * @param action action to wrap
-   * @tparam A the type of the request body
-   * @return
-   */
-  def using[A](service: OAuthService)(action: String => Action[A]): Action[(Action[A], A)] = Authenticated(
-    requestHeader => requestHeader.session.get(oauthAccessTokenKey(service)),
-    _ => Redirect(service.userAuthUrl))(action)
-
+  case class OAuthAccess[S <: OAuthService](token: String)
+  
+  def using[A, S <: OAuthService](service: S)(innerAction: OAuthAccess[S] => Request[A] => Result)
+                                  (implicit p: BodyParser[A]) = Action(p) {
+    request =>
+      request.session.get(oauthAccessTokenKey(service)).map {
+        accessToken =>
+          innerAction(OAuthAccess(accessToken))(request)
+      }.getOrElse(Redirect(service.userAuthUrl))
+  }
 
   def handleCallback(serviceName: String, code: String, error: String) = Action {
     implicit request =>
