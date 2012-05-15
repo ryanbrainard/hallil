@@ -11,11 +11,6 @@ import models._
 
 object GitHubController extends Controller {
 
-  def key = OAuthController.using(GitHubApi) {
-    oauthAccess =>
-      Action(Ok(oauthAccess.token))
-  }
-
   def issues = OAuthController.using(GitHubApi) {
     implicit oauthAccess =>
       implicit request: Request[AnyContent] =>

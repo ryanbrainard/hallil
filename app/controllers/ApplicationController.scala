@@ -1,7 +1,7 @@
 package controllers
 
 import play.api.mvc._
-import services.GitHubApi
+import services.{TrelloApi, GitHubApi}
 
 object ApplicationController extends Controller {
 

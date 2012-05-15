@@ -12,14 +12,14 @@ import controllers.OAuthController.OAuthAccess
  * @author Ryan Brainard
  */
 
-object GitHubApi extends OAuthService {
+object GitHubApi extends OAuth2Service {
 
   private val clientId = sys.env.getOrElse("GITHUB_CLIENT_ID", sys.error("GITHUB_CLIENT_ID not configured"))
   private val clientSecret = sys.env.getOrElse("GITHUB_CLIENT_SECRET", sys.error("GITHUB_CLIENT_SECRET not configured"))
 
   def userAuthUrl = "https://github.com/login/oauth/authorize?client_id=%s&scope=repo".format(clientId)
 
-  def exchangeCodeForAccessToken(code: String): Promise[String] = {
+  def retrieveAccessToken(code: String): Promise[String] = {
     val accessTokenExchangeResponsePattern = """.*access_token=(\w+).*""".r
 
     def accessTokenExchangeUrl(code: String) = "https://github.com/login/oauth/access_token?client_id=%s&client_secret=%s&code=%s"

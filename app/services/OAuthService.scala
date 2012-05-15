@@ -8,13 +8,21 @@ import play.api.libs.concurrent.Promise
 
 trait OAuthService {
   def userAuthUrl: String
-  def exchangeCodeForAccessToken(code: String): Promise[String]
+}
+
+trait OAuth1Service extends OAuthService {
+  def retrieveAccessToken(oauthToken: String, oauthVerifier: String): Promise[String]
+}
+
+trait OAuth2Service extends OAuthService {
+  def retrieveAccessToken(code: String): Promise[String]
 }
 
 object OAuthService {
   def apply(serviceName: String): Option[OAuthService] = {
     serviceName match {
       case "github" => Some(GitHubApi)
+      case "trello" => Some(TrelloApi)
       case _ => None
     }
   }

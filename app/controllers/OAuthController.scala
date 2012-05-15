@@ -1,7 +1,7 @@
 package controllers
 
 import play.api.mvc._
-import services.OAuthService
+import services.{OAuth2Service, OAuth1Service, OAuthService}
 
 object OAuthController extends Controller {
 
@@ -16,20 +16,49 @@ object OAuthController extends Controller {
       }.getOrElse(Redirect(service.userAuthUrl))
   }
 
-  def handleCallback(serviceName: String, code: String, error: String) = Action {
+  def key(serviceName: String): Action[AnyContent] = OAuthService(serviceName).map {
+    service =>
+      using(service) {
+        implicit oauthAccess =>
+          implicit request2: Request[AnyContent] =>
+            Ok(oauthAccess.token)
+      }
+  }.getOrElse(Action(NotFound("Unknown OAuth Service")))
+
+  def handleCallbackOAuth1(serviceName: String, oauth_token: String, oauth_verifier: String) = Action {
     implicit request =>
       OAuthService(serviceName) match {
-        case Some(service) => 
-          if (error != null) { handleCallbackError(service, error) }
-          else if (code != null) { handleCallbackSuccess(service, code) }
-          else { InternalServerError("Unknown OAuthController State") }
+        case Some(service: OAuth1Service) =>
+          handleCallbackSuccessOAuth1(service, oauth_token, oauth_verifier)
         case None => InternalServerError("Unknown OAuthController Service")
       }
   }
   
-  private def handleCallbackSuccess(service: OAuthService, code: String)(implicit request: Request[AnyContent]) = {
+  def handleCallbackOAuth2(serviceName: String, code: String, error: String) = Action {
+    implicit request =>
+      OAuthService(serviceName) match {
+        case Some(service: OAuth2Service) =>
+          if (error != null) { handleCallbackError(service, error) }
+          else if (code != null) { handleCallbackSuccessOAuth2(service, code) }
+          else { InternalServerError("Unknown OAuthController State") }
+        case None => InternalServerError("Unknown OAuthController Service")
+      }
+  }
+
+  private def handleCallbackSuccessOAuth1(service: OAuth1Service, oauthToken: String, oauthVerifier: String)(implicit request: Request[AnyContent]) = {
+    Async {
+      service.retrieveAccessToken(oauthToken, oauthVerifier).map {
+        accessToken =>
+          Redirect("/").withSession(
+            session + (oauthAccessTokenKey(service) -> accessToken)
+          )
+      }
+    }
+  }
+
+  private def handleCallbackSuccessOAuth2(service: OAuth2Service, code: String)(implicit request: Request[AnyContent]) = {
       Async {
-        service.exchangeCodeForAccessToken(code).map {
+        service.retrieveAccessToken(code).map {
           accessToken =>
             Redirect("/").withSession(
               session + (oauthAccessTokenKey(service) -> accessToken)
