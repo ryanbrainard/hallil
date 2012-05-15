@@ -2,9 +2,8 @@ package services
 
 import play.api.libs.ws.WS
 import play.api.libs.concurrent.Promise
-import collection.immutable.Map
 import models._
-import collection.{SortedMap, Seq}
+import collection.Seq
 import play.api.Logger
 import com.codahale.jerkson.{ParsingException, Json}
 import controllers.OAuthController.OAuthAccess
@@ -72,60 +71,4 @@ class GitHubApi(access: OAuthAccess[GitHubApi.type]) {
 
   def getIssues(repoName: String): Promise[Seq[Issue]] = get[Seq[Issue]]("/repos/" + repoName + "/issues")
 
-  def getAllRepos() = {
-    getAllOwners().flatMap {
-      owners =>
-        Promise.sequence(owners.map {
-          owner =>
-            getAllReposFor(owner)
-        }).map(s => s.flatMap(t => t)) //TODO: clean up this transformation
-    }
-  }
-
-  def getAllReposWithTheirIssues(): Promise[Map[Repo, Seq[Issue]]] = {
-    getAllOwners().flatMap {
-      owners =>
-        Promise.sequence(owners.map {
-          owner =>
-            getAllReposFor(owner).flatMap {
-              allRepos => getAllIssuesIn(allRepos)
-            }
-        }).map {
-          allReposWithTheirIssues =>
-            val reduced: Map[Repo, Seq[Issue]] = allReposWithTheirIssues.reduceLeft {
-              (a, b) =>
-                (a ++ b)
-            }
-            SortedMap(reduced.toSeq: _*).toMap
-        }
-    }
-  }
-
-  private def getAllOwners(): Promise[Seq[CanOwnRepo]] = getOrgs().map(_ :+ AuthenticatedUser)
-
-  private def getAllReposFor(owner: CanOwnRepo): Promise[Seq[Repo]] = owner match {
-    case org: Organization => getRepos(org)
-    case user: AuthenticatedUser.type => getRepos()
-  }
-
-  def getAllIssuesInNamed(repoNames: Seq[String]): Promise[Map[String, Seq[Issue]]] = {
-    Promise.sequence(repoNames.map {
-      repoName =>
-        getIssues(repoName).map {
-          issues =>
-            (repoName, issues.sortBy(issue => issue.number))
-        }
-    }).map(_.toMap)
-  }
-
-  //todo: re-dupe with above
-  private def getAllIssuesIn(repos: Seq[Repo]): Promise[Map[Repo, Seq[Issue]]] = {
-    Promise.sequence(repos.filter(_.has_issues).map {
-      repo =>
-        getIssues(repo).map {
-          issues =>
-            (repo, issues.sortBy(issue => issue.number))
-        }
-    }).map(_.toMap)
-  }
 }

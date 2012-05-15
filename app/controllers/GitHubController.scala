@@ -2,11 +2,12 @@ package controllers
 
 import play.api.mvc._
 import collection.immutable.Map
-import collection.Seq
-import models.{Issue, Repo}
 import services.{Redis, GitHubApi}
 import com.codahale.jerkson.Json
 import controllers.OAuthController.OAuthAccess
+import play.api.libs.concurrent.Promise
+import collection.{SortedMap, Seq}
+import models._
 
 object GitHubController extends Controller {
 
@@ -19,7 +20,7 @@ object GitHubController extends Controller {
     implicit oauthAccess =>
       implicit request: Request[AnyContent] =>
         Async {
-          GitHubApi().getAllIssuesInNamed(getSelectedRepos(oauthAccess)).map {
+          getAllIssuesInNamed(getSelectedRepos(oauthAccess)).map {
             (selectedReposWithIssues: Map[String, Seq[Issue]]) =>
               Ok(views.html.GitHub.issues(selectedReposWithIssues))
           }
@@ -30,7 +31,7 @@ object GitHubController extends Controller {
     implicit access =>
       Action {
         Async {
-          GitHubApi().getAllRepos().map {
+          getAllRepos().map {
             (allRepos: Seq[Repo]) =>
               val allReposWithSelections: Map[String, Boolean] = allRepos.filter(r => r.has_issues).map {
                 repo =>
@@ -83,9 +84,66 @@ object GitHubController extends Controller {
           Redirect("/github/issues")
       }
   }
-  
-  def getSelectedRepos(implicit oauthAccess: OAuthAccess[GitHubApi.type]) = {
+
+  private def getSelectedRepos(implicit oauthAccess: OAuthAccess[GitHubApi.type]) = {
     val rawSelectedRepos = Redis.exec(_.hget(oauthAccess.token, "selectedRepos"))
     Option(rawSelectedRepos).map(r => Json.parse[Seq[String]](r)).getOrElse(Seq())
+  }
+
+  private def getAllRepos()(implicit access: OAuthAccess[GitHubApi.type]) = {
+    getAllOwners().flatMap {
+      owners =>
+        Promise.sequence(owners.map {
+          owner =>
+            getAllReposFor(owner)
+        }).map(s => s.flatMap(t => t)) //TODO: clean up this transformation
+    }
+  }
+
+  private def getAllReposWithTheirIssues()(implicit access: OAuthAccess[GitHubApi.type]): Promise[Map[Repo, Seq[Issue]]] = {
+    getAllOwners().flatMap {
+      owners =>
+        Promise.sequence(owners.map {
+          owner =>
+            getAllReposFor(owner).flatMap {
+              allRepos => getAllIssuesIn(allRepos)
+            }
+        }).map {
+          allReposWithTheirIssues =>
+            val reduced: Map[Repo, Seq[Issue]] = allReposWithTheirIssues.reduceLeft {
+              (a, b) =>
+                (a ++ b)
+            }
+            SortedMap(reduced.toSeq: _*).toMap
+        }
+    }
+  }
+
+  private def getAllOwners()(implicit access: OAuthAccess[GitHubApi.type]): Promise[Seq[CanOwnRepo]] = GitHubApi().getOrgs().map(_ :+ AuthenticatedUser)
+
+  private def getAllReposFor(owner: CanOwnRepo)(implicit access: OAuthAccess[GitHubApi.type]): Promise[Seq[Repo]] = owner match {
+    case org: Organization => GitHubApi().getRepos(org)
+    case user: AuthenticatedUser.type => GitHubApi().getRepos()
+  }
+
+  private def getAllIssuesInNamed(repoNames: Seq[String])(implicit access: OAuthAccess[GitHubApi.type]): Promise[Map[String, Seq[Issue]]] = {
+    Promise.sequence(repoNames.map {
+      repoName =>
+        GitHubApi().getIssues(repoName).map {
+          issues =>
+            (repoName, issues.sortBy(issue => issue.number))
+        }
+    }).map(_.toMap)
+  }
+
+  //todo: re-dupe with above
+  private def getAllIssuesIn(repos: Seq[Repo])(implicit access: OAuthAccess[GitHubApi.type]): Promise[Map[Repo, Seq[Issue]]] = {
+    Promise.sequence(repos.filter(_.has_issues).map {
+      repo =>
+        GitHubApi().getIssues(repo).map {
+          issues =>
+            (repo, issues.sortBy(issue => issue.number))
+        }
+    }).map(_.toMap)
   }
 }
