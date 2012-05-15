@@ -24,9 +24,9 @@ object TrelloApi extends OAuth1Service {
   private val provider: DefaultOAuthProvider = new DefaultOAuthProvider("https://trello.com/1/OAuthGetRequestToken",
                                                                         "https://trello.com/1/OAuthGetAccessToken",
                                                                         "https://trello.com/1/OAuthAuthorizeToken")
-  def userAuthUrl = {
+  def userAuthUrl(callbackHost: String) = {
     val consumer: DefaultOAuthConsumer = newConsumer()
-    val authUrl: String = provider.retrieveRequestToken(consumer, "http://localhost:9000/oauth1/callback/trello")
+    val authUrl: String = provider.retrieveRequestToken(consumer, "http://" + callbackHost + "/oauth1/callback/trello")
     Redis.exec(_.setex(consumer.getToken, 5 * 60, consumer.getTokenSecret))
     authUrl
   }
@@ -43,7 +43,7 @@ object TrelloApi extends OAuth1Service {
 
 class TrelloApi(access: OAuthAccess[TrelloApi.type]) {
 
-  private val baseApiUrl = "https://api.trello.com"
+  private val baseApiUrl = "https://api.trello.com/1"
 
   private def get[A](url: String)(implicit mf: Manifest[A]) = {
     val fullUrl = if (url.startsWith("http")) url else baseApiUrl + url
@@ -61,5 +61,5 @@ class TrelloApi(access: OAuthAccess[TrelloApi.type]) {
     }
   }
 
-  def getBoards(): Promise[Seq[Board]] = get[Seq[Board]]("/1/members/me/boards")
+  def getBoards(): Promise[Seq[Board]] = get[Seq[Board]]("/members/me/boards")
 }

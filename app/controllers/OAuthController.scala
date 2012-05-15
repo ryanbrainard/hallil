@@ -13,7 +13,10 @@ object OAuthController extends Controller {
       request.session.get(oauthAccessTokenKey(service)).map {
         accessToken =>
           innerAction(OAuthAccess(accessToken))(request)
-      }.getOrElse(Redirect(service.userAuthUrl))
+      }.getOrElse {
+        val callbackHost: String = request.headers("Host")
+        Redirect(service.userAuthUrl(callbackHost))
+      }
   }
 
   def key(serviceName: String): Action[AnyContent] = OAuthService(serviceName).map {

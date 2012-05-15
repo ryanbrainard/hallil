@@ -17,7 +17,7 @@ object GitHubApi extends OAuth2Service {
   private val clientId = sys.env.getOrElse("GITHUB_CLIENT_ID", sys.error("GITHUB_CLIENT_ID not configured"))
   private val clientSecret = sys.env.getOrElse("GITHUB_CLIENT_SECRET", sys.error("GITHUB_CLIENT_SECRET not configured"))
 
-  def userAuthUrl = "https://github.com/login/oauth/authorize?client_id=%s&scope=repo".format(clientId)
+  def userAuthUrl(callbackHost: String) = "https://github.com/login/oauth/authorize?client_id=%s&scope=repo".format(clientId)
 
   def retrieveAccessToken(code: String): Promise[String] = {
     val accessTokenExchangeResponsePattern = """.*access_token=(\w+).*""".r

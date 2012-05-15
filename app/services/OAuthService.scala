@@ -7,7 +7,7 @@ import play.api.libs.concurrent.Promise
  */
 
 trait OAuthService {
-  def userAuthUrl: String
+  def userAuthUrl(callbackHost: String): String
 }
 
 trait OAuth1Service extends OAuthService {
