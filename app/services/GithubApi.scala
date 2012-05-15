@@ -13,6 +13,8 @@ import controllers.OAuthController.OAuthAccess
  */
 
 object GitHubApi extends OAuth2Service {
+  
+  val name = "github"
 
   private val clientId = sys.env.getOrElse("GITHUB_CLIENT_ID", sys.error("GITHUB_CLIENT_ID not configured"))
   private val clientSecret = sys.env.getOrElse("GITHUB_CLIENT_SECRET", sys.error("GITHUB_CLIENT_SECRET not configured"))
