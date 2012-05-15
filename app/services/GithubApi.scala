@@ -7,6 +7,7 @@ import models._
 import collection.{SortedMap, Seq}
 import play.api.Logger
 import com.codahale.jerkson.{ParsingException, Json}
+import controllers.OAuthController.OAuthAccess
 
 /**
  * @author Ryan Brainard
@@ -34,10 +35,10 @@ object GitHubApi extends OAuthService {
     }
   }
 
-  def apply(accessToken: String) = new GitHubApi(accessToken)
+  def apply()(implicit access: OAuthAccess[GitHubApi.type]) = new GitHubApi(access)
 }
 
-class GitHubApi(accessToken: String) {
+class GitHubApi(access: OAuthAccess[GitHubApi.type]) {
 
   private val baseApiUrl = "https://api.github.com"
 
@@ -45,7 +46,7 @@ class GitHubApi(accessToken: String) {
     val fullUrl = if (url.startsWith("http")) url else baseApiUrl + url
     Logger.debug("GET " + fullUrl)
 
-    WS.url(fullUrl).withHeaders(("Authorization", "token " + accessToken)).get().map {
+    WS.url(fullUrl).withHeaders(("Authorization", "token " + access.token)).get().map {
       response =>
         try {
           Json.parse[A](response.body)(mf)

@@ -8,7 +8,7 @@ object OAuthController extends Controller {
   case class OAuthAccess[S <: OAuthService](token: String)
   
   def using[A, S <: OAuthService](service: S)(innerAction: OAuthAccess[S] => Request[A] => Result)
-                                  (implicit p: BodyParser[A]) = Action(p) {
+                                  (implicit p: BodyParser[A] = parse.anyContent) = Action(p) {
     request =>
       request.session.get(oauthAccessTokenKey(service)).map {
         accessToken =>
