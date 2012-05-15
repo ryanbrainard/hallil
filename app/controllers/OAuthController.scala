@@ -1,8 +1,9 @@
 package controllers
 
 import play.api.mvc._
-import services.{OAuth2Service, OAuth1Service, OAuthService}
 import play.api.libs.concurrent.Promise
+import services.{OAuth2Service, OAuth1Service, OAuthService}
+import play.Logger
 
 object OAuthController extends Controller {
 
@@ -10,13 +11,15 @@ object OAuthController extends Controller {
 
   def using[A, S <: OAuthService](service: S)(innerAction: OAuthAccess[S] => Request[A] => Result)
                                  (implicit p: BodyParser[A] = parse.anyContent) = Action(p) {
-    request =>
+    implicit request =>
       request.session.get(oauthAccessTokenKey(service)).map {
         accessToken =>
           innerAction(OAuthAccess(accessToken))(request)
       }.getOrElse {
         val callbackHost: String = request.headers("Host")
-        Redirect(service.userAuthUrl(callbackHost))
+        Redirect(service.userAuthUrl(callbackHost)).withSession {
+          session + ("oauthRetUrl" -> request.uri)
+        }
       }
   }
 
@@ -53,8 +56,9 @@ object OAuthController extends Controller {
     Async {
       retrieveAccessToken.map {
         accessToken =>
-          Redirect("/").withSession(
-            session + (oauthAccessTokenKey(service) -> accessToken)
+            Redirect(session.get("oauthRetUrl").getOrElse("/")).withSession(
+            session - ("oauthRetUrl")
+                    + (oauthAccessTokenKey(service) -> accessToken)
           )
       }
     }
