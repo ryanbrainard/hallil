@@ -20,7 +20,7 @@ trait OAuth1Service extends OAuthService {
 
   def userAuthUrl(callbackHost: String) = {
     val consumer: DefaultOAuthConsumer = newMutableConsumer()
-    val authUrl: String = provider.retrieveRequestToken(consumer, "http://" + callbackHost + "/oauth1/callback/" + name)
+    val authUrl: String = provider.retrieveRequestToken(consumer, "http://" + callbackHost + "/oauth/callback/1.0/" + name)
     Redis.exec(_.setex(oauthTokenSecretKey(consumer.getToken), 5 * 60, consumer.getTokenSecret))
     authUrl
   }

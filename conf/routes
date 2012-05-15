@@ -5,8 +5,8 @@
 # Home page
 GET     /                                            controllers.ApplicationController.index
 GET     /oauth/key/:service                          controllers.OAuthController.key(service: String)
-GET     /oauth1/callback/:service                    controllers.OAuthController.handleCallbackOAuth1(service: String, oauth_token: String, oauth_verifier: String)
-GET     /oauth/callback/:service                     controllers.OAuthController.handleCallbackOAuth2(service: String, code: String ?= null, error: String ?= null)
+GET     /oauth/callback/1.0/:service                 controllers.OAuthController.handleCallbackOAuth1(service: String, oauth_token: String, oauth_verifier: String)
+GET     /oauth/callback/2.0/:service                 controllers.OAuthController.handleCallbackOAuth2(service: String, code: String ?= null, error: String ?= null)
 GET     /logout                                      controllers.ApplicationController.logout
 
 GET     /trello/boards                               controllers.TrelloController.boards

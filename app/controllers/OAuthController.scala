@@ -3,7 +3,6 @@ package controllers
 import play.api.mvc._
 import play.api.libs.concurrent.Promise
 import services.{OAuth2Service, OAuth1Service, OAuthService}
-import play.Logger
 
 object OAuthController extends Controller {
 
@@ -35,7 +34,7 @@ object OAuthController extends Controller {
     implicit request =>
       OAuthService(serviceName) match {
         case Some(service: OAuth1Service) =>
-          handleCallbackSuccessOAuth(service, service.retrieveAccessToken(oauth_token, oauth_verifier))
+          handleCallbackSuccess(service, service.retrieveAccessToken(oauth_token, oauth_verifier))
         case None => InternalServerError("Unknown OAuth 1.0 Service")
       }
   }
@@ -45,22 +44,20 @@ object OAuthController extends Controller {
       OAuthService(serviceName) match {
         case Some(service: OAuth2Service) =>
           if (error != null) { InternalServerError("OAuth 2.0 Error: " + error) }
-          else if (code != null) { handleCallbackSuccessOAuth(service, service.retrieveAccessToken(code)) }
+          else if (code != null) { handleCallbackSuccess(service, service.retrieveAccessToken(code)) }
           else { InternalServerError("Unknown OAuth 2.0 State") }
         case None => InternalServerError("Unknown OAuth 2.0 Service")
       }
   }
 
-  private def handleCallbackSuccessOAuth(service: OAuthService, retrieveAccessToken: => Promise[String])
-                                        (implicit request: Request[AnyContent]) = {
-    Async {
-      retrieveAccessToken.map {
-        accessToken =>
-            Redirect(session.get("oauthRetUrl").getOrElse("/")).withSession(
-            session - ("oauthRetUrl")
-                    + (oauthAccessTokenKey(service) -> accessToken)
-          )
-      }
+  private def handleCallbackSuccess(service: OAuthService, retrieveAccessToken: => Promise[String])
+                                        (implicit request: Request[AnyContent]) = Async {
+    retrieveAccessToken.map {
+      accessToken =>
+        Redirect(session.get("oauthRetUrl").getOrElse("/")).withSession(
+          session - ("oauthRetUrl")
+                  + (oauthAccessTokenKey(service) -> accessToken)
+        )
     }
   }
 
